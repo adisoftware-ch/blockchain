@@ -1,0 +1,41 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Blockchain Client
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-header>
+      <ion-label>Wallet {{wallet.walletaddress}}</ion-label>
+    </ion-header>
+    <ion-item>
+      <ion-label>Public Key</ion-label>
+      <ion-input [(ngModel)]="wallet.publicKey" type="text" readonly></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Private Key</ion-label>
+      <ion-input [(ngModel)]="wallet.privateKey" type="text" readonly></ion-input>
+    </ion-item>
+  </ion-list>
+
+  <ion-list>
+    <ion-header>
+      <ion-label>New Transaction</ion-label>
+    </ion-header>
+    <ion-item>
+      <ion-label>Recipient Address</ion-label>
+      <ion-input [(ngModel)]="recipientAddress" type="text"></ion-input>
+      <ion-select [(ngModel)]="recipientAddress" placeholder="Select One">
+        <ion-select-option *ngFor="let address of recipientAddresses | async">{{address}}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-label>Amount to send</ion-label>
+      <ion-input [(ngModel)]="amountToSend" type="number"></ion-input>
+    </ion-item>
+  </ion-list>
+  <ion-button expand="block" type="submit" class="ion-no-margin" (click)="sendMoney()">Send</ion-button>
+</ion-content>
