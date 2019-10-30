@@ -12,28 +12,27 @@
       <ion-label>Wallet {{wallet.walletaddress}}</ion-label>
     </ion-header>
     <ion-item>
-      <ion-label>Public Key</ion-label>
-      <ion-input [(ngModel)]="wallet.publicKey" type="text" readonly></ion-input>
-    </ion-item>
-    <ion-item>
-      <ion-label>Private Key</ion-label>
-      <ion-input [(ngModel)]="wallet.privateKey" type="text" readonly></ion-input>
+      <ion-label>Balance $</ion-label>
+      <ion-label>
+        <p>{{balanceSubject | async}}</p>
+      </ion-label>
     </ion-item>
   </ion-list>
-
+  <br/>
+  <br/>
   <ion-list>
     <ion-header>
       <ion-label>New Transaction</ion-label>
     </ion-header>
     <ion-item>
-      <ion-label>Recipient Address</ion-label>
+      <ion-label>Recipient</ion-label>
       <ion-input [(ngModel)]="recipientAddress" type="text"></ion-input>
       <ion-select [(ngModel)]="recipientAddress" placeholder="Select One">
         <ion-select-option *ngFor="let address of recipientAddresses | async">{{address}}</ion-select-option>
       </ion-select>
     </ion-item>
     <ion-item>
-      <ion-label>Amount to send</ion-label>
+      <ion-label>Amount $</ion-label>
       <ion-input [(ngModel)]="amountToSend" type="number"></ion-input>
     </ion-item>
   </ion-list>

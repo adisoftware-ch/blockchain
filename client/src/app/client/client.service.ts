@@ -16,6 +16,7 @@ export class Wallet {
 
 export class Transaction {
   transaction: {
+    id: string;
     senderAdress: string;
     senderPublicKey: string;
     recipientAddress: string;
@@ -42,6 +43,14 @@ export class ClientService {
 
     this.socket = io.connect('ws://localhost:3000');
     this.listen();
+  }
+
+  /**
+   * Initialize the client. Called on startup of the app.
+   */
+  start() {
+    this.generateWallet();
+    console.log(`ClientService initialized: ${this.wallet.walletaddress}`);
   }
 
   private listen() {
@@ -78,8 +87,9 @@ export class ClientService {
     return this.wallet;
   }
 
-  generateTrx(senderWallet: Wallet, recipientAddress: string, amount: number) {
+  async generateTrx(senderWallet: Wallet, recipientAddress: string, amount: number): Promise<string> {
     const trxContent = {
+      id: 'TRX' + new Date().getTime(),
       senderAdress: senderWallet.walletaddress,
       senderPublicKey: senderWallet.publicKey,
       recipientAddress,
@@ -95,6 +105,10 @@ export class ClientService {
 
     console.log(`ClientService.generateTrx(..): sending trx:  ${msg}`);
     this.socket.emit('trx', msg);
+
+    return new Promise((resolve) => {
+      resolve(trx.transaction.id);
+    });
   }
 
 }

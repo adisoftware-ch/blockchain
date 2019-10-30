@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>
-      Blockchain Node: {{nodeID}}
+      Node: {{nodeID}}
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -13,12 +13,12 @@
       <ion-label>Transaction ready for next Block</ion-label>
     </ion-list-header>
     <ion-item *ngFor="let trx of openTransactions | async">
-      <ion-label>Sender: {{trx.transaction.senderAdress}}</ion-label>
-      <ion-label>Recipient: {{trx.transaction.recipientAddress}}</ion-label>
-      <ion-label>Amount: {{trx.transaction.amount}}</ion-label>
+      <ion-label><p>{{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
     </ion-item>
   </ion-list>
-  <ion-button expand="block" type="submit" class="ion-no-margin" (click)="mine()">Mine Block</ion-button>
+  <ion-button expand="block" type="submit" class="ion-no-margin" (click)="mine()">
+    Mine Block
+  </ion-button>
 
   <ion-list>
     <ion-list-header>
@@ -26,12 +26,10 @@
     </ion-list-header>
     <div *ngFor="let block of fullChain | async">
       <ion-list-header>
-        <ion-label>Block: {{block.blockNumber}}</ion-label>
+        <ion-label>Block: {{block.blockNumber}} [{{block.blockNumber > 1 ? 'nonce: ' + block.nonce : 'GENESIS'}}]</ion-label>
       </ion-list-header>
-      <ion-item *ngFor="let btrx of block.transactions">
-        <ion-label>Sender: {{btrx.transaction.senderAdress}}</ion-label>
-        <ion-label>Recipient: {{btrx.transaction.recipientAddress}}</ion-label>
-        <ion-label>Amount: {{btrx.transaction.amount}}</ion-label>
+      <ion-item *ngFor="let trx of block.transactions">
+        <ion-label><p>{{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
       </ion-item>
     </div>
   </ion-list>

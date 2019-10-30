@@ -1,41 +1,53 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>
-      Tab One
+      Blockchain Demo
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
     <ion-card class="welcome-card">
-      <img src="/assets/shapes.svg" alt="" />
+      <img src="/assets/title.svg" alt="Blockchain Icon made by www.flaticon.com/authors/ddara" />
       <ion-card-header>
-        <ion-card-subtitle>Get Started</ion-card-subtitle>
-        <ion-card-title>Welcome to Ionic</ion-card-title>
+        <ion-card-subtitle>The Demo</ion-card-subtitle>
+        <ion-card-title>Simple Blockchain</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <p>Now that your app has been created, you'll want to start building out features and components. Check out some of the resources below for next steps.</p>
+        <p>A Blockchain is - simply spoken - a database laking any central instance. All data is hold by distributed nodes. Trust over the data contained is given by sealing past Transactions and finding consensus between the Nodes. A malicious Node would require 51% of calculation power to break consensus.</p>
+        <br/>
+        <p>This Demo is intended to showcase the basic steps of a Blockchain. How does it work:</p>
+        <ol>
+          <li>Client sends Transaction to the System</li>
+          <li>All Nodes pick it up</li>
+          <li>Other Transactions to follow, till ..</li>
+          <li>At least one Node mines the next block of Transactions</li>
+          <li>The mining Node notifies the others of the newly mined Block</li>
+          <li>All Nodes pick the new Block; check it for validity (Proof of Work) and update their Blockchain</li>
+          <li>Once accepted, the new Block is sealed; e.g. immutable without forking the Blockchain</li>
+        </ol>
+        <p>Play around! Start the app in multiple browsers and multiple devices. Create Transactions as a Client and mine Blocks as a mining Node. Check the Log for messages sent and consumed by the distributed System.</p>
       </ion-card-content>
     </ion-card>
     <ion-list lines="none">
       <ion-list-header>
         <ion-label>Resources</ion-label>
       </ion-list-header>
-      <ion-item href="https://ionicframework.com/docs/">
+      <ion-item href="#" onclick="window.open('https://github.com/adisoftware-ch/blockchain/blob/master/README.md', '_system')">
+        <ion-icon slot="start" color="medium" name="color-wand"></ion-icon>
+        <ion-label>The complete Documentation on how the Demo works</ion-label>
+      </ion-item>
+      <ion-item href="#" onclick="window.open('https://medium.com/swlh/blockchain-for-dummies-d3daf2170068', '_system')">
         <ion-icon slot="start" color="medium" name="book"></ion-icon>
-        <ion-label>Ionic Documentation</ion-label>
+        <ion-label>Blockchain for Dummies</ion-label>
       </ion-item>
-      <ion-item href="https://ionicframework.com/docs/building/scaffolding">
+      <ion-item href="#" onclick="window.open('http://adilmoujahid.com/posts/2018/03/intro-blockchain-bitcoin-python', '_system')">
+        <ion-icon slot="start" color="medium" name="book"></ion-icon>
+        <ion-label>Tutorial Blockchain in Python - the basis for this Demo</ion-label>
+      </ion-item>
+      <ion-item href="#" onclick="window.open('https://github.com/adisoftware-ch/blockchain', '_system')">
         <ion-icon slot="start" color="medium" name="build"></ion-icon>
-        <ion-label>Scaffold Out Your App</ion-label>
-      </ion-item>
-      <ion-item href="https://ionicframework.com/docs/layout/structure">
-        <ion-icon slot="start" color="medium" name="grid"></ion-icon>
-        <ion-label>Change Your App Layout</ion-label>
-      </ion-item>
-      <ion-item href="https://ionicframework.com/docs/theming/basics">
-        <ion-icon slot="start" color="medium" name="color-fill"></ion-icon>
-        <ion-label>Theme Your App</ion-label>
+        <ion-label>Hands on: The Demo App on GitHub</ion-label>
       </ion-item>
     </ion-list>
 </ion-content>

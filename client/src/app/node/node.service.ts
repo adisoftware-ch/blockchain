@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { verifySignature, stringToBytes, bytesToString } from '@waves/ts-lib-crypto'
+import { verifySignature, stringToBytes } from '@waves/ts-lib-crypto';
 
 import * as io from 'socket.io-client';
 
@@ -7,7 +7,6 @@ import * as sha256 from 'fast-sha256';
 
 import { Observable, of } from 'rxjs';
 import { Transaction } from '../client/client.service';
-import { makeBindingParser } from '@angular/compiler';
 
 export class Chain {
   node: string;
@@ -73,8 +72,6 @@ export class Blockchain {
    * Add a block of transactions to the blockchain
    */
   createBlock(nonce: number, previousHash: string): Block {
-
-
     const block: Block = {
       blockNumber: this.chain.length + 1,
       timestamp: new Date().getTime(),
@@ -108,7 +105,7 @@ export class Blockchain {
    * Create a SHA-256 hash of a block
    */
   hash(block: Block): string {
-    return this.toHexString(sha256.hash(stringToBytes(JSON.stringify(block))));
+    return this.toHexString(sha256.hash(stringToBytes(this.toHashString(block, null))));
   }
 
   /**
@@ -133,7 +130,7 @@ export class Blockchain {
    * Check, if a hash value satisfies the mining conditions
    */
   verifyProof(transactions: Transaction[], lastHash: string, nonce: number): boolean {
-    const guess: string = JSON.stringify(transactions) + lastHash + nonce;
+    const guess: string = this.toHashString(null, transactions) + lastHash + nonce;
     const guessHash: string = this.toHexString(sha256.hash(stringToBytes(guess)));
 
     console.log(guessHash);
@@ -182,7 +179,7 @@ export class Blockchain {
    * Clears all open transactions and returns true, if our chain was replaced.
    */
   resolveConflicts(chain: Chain): boolean {
-    console.log('resolving conflicts:', chain)
+    console.log('resolving conflicts:', chain);
     if (chain.node !== this.nodeID && chain.chain.length > this.chain.length && this.verifyChain(chain.chain)) {
       this.chain.splice(0, this.chain.length);
       chain.chain.forEach(block => {
@@ -193,6 +190,41 @@ export class Blockchain {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Helper method that transforms a block or a list of transactions to its string representation
+   * taking care of the order of objects parameters.
+   */
+  private toHashString(block: Block, transactions: Transaction[]): string {
+    let result = '';
+    const divider = '_';
+
+    if (block) {
+      result += block.blockNumber + divider + block.nonce + divider + block.previousHash
+        + divider + block.timestamp + divider + this.toHashString(null, block.transactions);
+    }
+
+    if (transactions) {
+      const sorted = transactions.sort((a, b) => {
+        if (a.transaction.id > b.transaction.id) {
+          return 1;
+        }
+        if (a.transaction.id < b.transaction.id) {
+          return -1;
+        }
+        return 0;
+      });
+
+      for (let i = 0; i < sorted.length; i++) {
+        const trx = sorted[i];
+        result += (i > 0 ? divider : '') + trx.signature + divider + trx.transaction.amount
+          + divider + trx.transaction.id + divider + trx.transaction.recipientAddress
+          + trx.transaction.senderAdress + divider + trx.transaction.senderPublicKey;
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -235,6 +267,9 @@ export class NodeService {
     this.listen();
   }
 
+  /**
+   * Initialize the node. Called on startup of the app.
+   */
   start() {
     console.log(`NodeService initialized: ${this.blockchain.nodeID}`);
   }
@@ -260,6 +295,10 @@ export class NodeService {
       }
     });
 
+    /**
+     * Received chain-request from other nodes consensus algorithm.
+     * Send our ID and chain for comparision.
+     */
     this.socket.on('request-chain', () => {
       this.socket.emit('chain', JSON.stringify({
         node: this.blockchain.nodeID,
@@ -333,18 +372,30 @@ export class NodeService {
   /**
    * Mine the next block. Send commit message to all nodes, if successful.
    */
-  mine() {
-    const lastBlock = this.blockchain.chain[this.blockchain.chain.length - 1];
-    const nonce = this.blockchain.proofOfWork();
+  async mine(): Promise<Block> {
+    let block: Block;
 
-    const previousHash = this.blockchain.hash(lastBlock);
-    const block = this.blockchain.createBlock(nonce, previousHash);
+    if (this.blockchain.transactions.length > 0) {
+      const lastBlock = this.blockchain.chain[this.blockchain.chain.length - 1];
+      const nonce = this.blockchain.proofOfWork();
 
-    this.socket.emit('commit', JSON.stringify({
-      message: 'New Block forged',
-      node: this.blockchain.nodeID,
-      block
-    }));
+      const previousHash = this.blockchain.hash(lastBlock);
+      block = this.blockchain.createBlock(nonce, previousHash);
+
+      this.socket.emit('commit', JSON.stringify({
+        message: 'New Block forged',
+        node: this.blockchain.nodeID,
+        block
+      }));
+    }
+
+    return new Promise((resolve, reject) => {
+      if (block) {
+        resolve(block);
+      } else {
+        reject('No block could be mined. Are there transactions ready?');
+      }
+    });
   }
 
   consensus() {
