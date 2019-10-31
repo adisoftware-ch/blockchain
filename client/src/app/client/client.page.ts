@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ClientService, Wallet } from './client.service';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { NodeService } from '../node/node.service';
+import { Observable } from 'rxjs';
 import { AlertController } from '@ionic/angular';
 
 @Component({
@@ -19,7 +18,7 @@ export class ClientPage implements OnInit {
 
   amountToSend: number;
 
-  constructor(private clientService: ClientService, private nodeService: NodeService, private alertController: AlertController) {}
+  constructor(private clientService: ClientService, private alertController: AlertController) {}
 
   ngOnInit() {
     // access client's wallet
