@@ -1,38 +1,40 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>
-      Node: {{nodeID}}
-    </ion-title>
+    <ion-title size="small">Node: {{nodeID}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content fullscreen>
 
-  <ion-list>
-    <ion-list-header>
-      <ion-label>Transaction ready for next Block</ion-label>
-    </ion-list-header>
-    <ion-item *ngFor="let trx of openTransactions | async">
-      <ion-label><p>{{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
-    </ion-item>
-  </ion-list>
-  <ion-button expand="block" type="submit" class="ion-no-margin" (click)="mine()">
-    Mine Block
-  </ion-button>
-
-  <ion-list>
-    <ion-list-header>
-      <ion-label>Current Blockchain</ion-label>
-    </ion-list-header>
-    <div *ngFor="let block of fullChain | async">
-      <ion-list-header>
-        <ion-label>Block: {{block.blockNumber}} [{{block.blockNumber > 1 ? 'nonce: ' + block.nonce : 'GENESIS'}}]</ion-label>
-      </ion-list-header>
-      <ion-item *ngFor="let trx of block.transactions">
-        <ion-label><p>{{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
+  <ion-card *ngIf="(openTransactions | async).length > 0 || (openStates | async).length > 0">
+    <ion-card-subtitle>Ready for next Block</ion-card-subtitle>
+    <ion-button expand="block" (click)="mine()">Mine Block</ion-button>
+    <ion-list>
+      <ion-item *ngFor="let trx of openTransactions | async">
+        <ion-label><p>TR: {{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
       </ion-item>
-    </div>
-  </ion-list>
-  <ion-button expand="block" type="submit" class="ion-no-margin" (click)="consensus()">Check Consensus</ion-button>
+      <ion-item *ngFor="let state of openStates | async">
+        <ion-label><p>ST: {{state.wallet.walletaddress + ' | A: ' + state.age + ' | $' + state.wallet.balance}} </p></ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-card>
+  
+  <ion-card>
+    <ion-card-subtitle>Current Blockchain</ion-card-subtitle>
+    <ion-button expand="block" (click)="consensus()">Check Consensus</ion-button>
+    <ion-list>
+      <div *ngFor="let block of fullChain | async">
+        <ion-list-header>
+          <ion-label>Block: {{block.blockNumber}} [{{block.blockNumber == 1 ? 'GENESIS' : 'nonce: ' + block.nonce}}]</ion-label>
+        </ion-list-header>
+        <ion-item *ngFor="let trx of block.transactions">
+          <ion-label><p>TR: {{trx.transaction.senderAdress.substring(0,4) + '...' + trx.transaction.senderAdress.substring(trx.transaction.senderAdress.length-3)}} =&gt; {{trx.transaction.recipientAddress.substring(0,4) + '...' + trx.transaction.recipientAddress.substring(trx.transaction.recipientAddress.length-3)}}: ${{trx.transaction.amount}}</p></ion-label>
+        </ion-item>
+        <ion-item *ngFor="let state of block.states">
+          <ion-label><p>ST: {{state.wallet.walletaddress + ' | A: ' + state.age + ' | $' + state.wallet.balance}} </p></ion-label>
+        </ion-item>
+      </div>
+    </ion-list>
+  </ion-card>
 
 </ion-content>

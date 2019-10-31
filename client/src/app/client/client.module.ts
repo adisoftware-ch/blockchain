@@ -4,7 +4,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientPage } from './client.page';
-import { ClientService } from './client.service';
 
 @NgModule({
   imports: [
@@ -13,7 +12,6 @@ import { ClientService } from './client.service';
     FormsModule,
     RouterModule.forChild([{ path: '', component: ClientPage }])
   ],
-  declarations: [ClientPage],
-  providers: [ClientService]
+  declarations: [ClientPage]
 })
 export class ClientPageModule {}

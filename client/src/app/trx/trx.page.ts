@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 })
 export class TrxPage implements OnInit {
 
-  trxlog: Observable<string[]>;
+  trxlog: Observable<any[]>;
 
   constructor(private nodeService: NodeService) {}
 

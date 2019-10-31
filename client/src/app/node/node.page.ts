@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NodeService, Block } from './node.service';
 import { Observable } from 'rxjs';
-import { Transaction } from '../client/client.service';
+import { Transaction, WalletState } from '../client/client.service';
 import { AlertController, LoadingController } from '@ionic/angular';
 
 @Component({
@@ -13,6 +13,7 @@ export class NodePage implements OnInit {
 
   fullChain: Observable<Block[]>;
   openTransactions: Observable<Transaction[]>;
+  openStates: Observable<WalletState[]>;
   nodeID: string;
 
   constructor(private nodeService: NodeService, private alertController: AlertController, private loadingController: LoadingController) {}
@@ -25,6 +26,7 @@ export class NodePage implements OnInit {
 
     this.fullChain = this.nodeService.getFullChain();
     this.openTransactions = this.nodeService.getTransactions();
+    this.openStates = this.nodeService.getStates();
     this.nodeID = this.nodeService.getNodeID();
   }
 

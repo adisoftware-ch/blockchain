@@ -24,8 +24,6 @@ export const start = (port: number): Promise<void> => {
         server = http.createServer(app);
     }
 
-    let wallets = new Array<string>();
-
     const io = socketIo(server);
 
     io.on('connection', function(socket){
@@ -33,24 +31,19 @@ export const start = (port: number): Promise<void> => {
         const number = Object.keys(io.sockets.connected).length;
         console.log(`dispatching server; current number of connections: ${number}`);
         io.sockets.emit('sockets:connected', number);
-
-        io.sockets.emit('wallets', JSON.stringify(wallets));
     
         socket.on('disconnect', function() {
             const number = Object.keys(io.sockets.connected).length;
             console.log(`dispatching server; current number of connections: ${number}`);
             io.sockets.emit('sockets:connected', number);
-            if (number == 0) {
-                wallets = new Array<string>();
-            }
         })
 
+        /**
+         * A new wallet is requested.
+         */
         socket.on('wallet', function(data: string) {
-            if (data && data.trim().length > 0) {
-                console.log(`new wallet ${data}`);
-                wallets.push(data);
-                io.sockets.emit('wallets', JSON.stringify(wallets));
-            }
+            console.log(`new wallet to be registered`);
+            io.sockets.emit('wallet', data);
         })
 
         socket.on('request-chains', function() {

@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { verifySignature, stringToBytes } from '@waves/ts-lib-crypto';
 
-import * as io from 'socket.io-client';
-
 import * as sha256 from 'fast-sha256';
 
 import { Observable, of } from 'rxjs';
-import { Transaction } from '../client/client.service';
+import { Transaction, WalletState } from '../client/client.service';
+import { SocketUtil } from '../util/socket.util';
+import { environment } from 'src/environments/environment';
 
 export class Chain {
   node: string;
@@ -17,6 +17,7 @@ export class Block {
   blockNumber: number;
   timestamp: number;
   transactions: Transaction[];
+  states: WalletState[];
   nonce: number;
   previousHash: string;
 }
@@ -25,26 +26,22 @@ export class Blockchain {
 
   transactions: Transaction[];
 
+  states: WalletState[];
+
   chain: Block[];
 
-  nodes: Set<any>;
-
   nodeID: string;
+
+  nextStates: WalletState[];
 
   constructor() {
     // start new Blockchain
     this.chain = new Array<Block>();
     this.transactions = new Array<Transaction>();
+    this.states = new Array<WalletState>();
     this.nodeID = 'BCHAIN' + new Date().getTime();
     // create genesis block
     this.createBlock(0, '00');
-  }
-
-  /**
-   * Add a new node to the list of nodes
-   */
-  registerNode() {
-
   }
 
   /**
@@ -54,6 +51,15 @@ export class Blockchain {
   verifyTransactionSignature(transaction: Transaction): boolean {
     return verifySignature(
       transaction.transaction.senderPublicKey, stringToBytes(JSON.stringify(transaction.transaction)), transaction.signature);
+  }
+
+  /**
+   * Check that the provided signature corresponds to the state
+   * by public key
+   */
+  verifyStateSignature(state: WalletState): boolean {
+    return verifySignature(
+      state.wallet.publicKey, stringToBytes(JSON.stringify(state.wallet)), state.signature);
   }
 
   /**
@@ -69,18 +75,35 @@ export class Blockchain {
   }
 
   /**
+   * Add a wallet state to the state array, if the signature verified
+   */
+  submitState(state: WalletState): boolean {
+    if (this.verifyStateSignature(state)) {
+      this.states.push(state);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Add a block of transactions to the blockchain
    */
   createBlock(nonce: number, previousHash: string): Block {
     const block: Block = {
       blockNumber: this.chain.length + 1,
       timestamp: new Date().getTime(),
-      transactions: this.transactions.splice(0, this.transactions.length),
+      transactions: Object.assign([], this.transactions), // provide a clone, not reference !
+      states: Object.assign([], this.nextStates),
       nonce,
       previousHash
     };
 
+    // append the new block to the Blockchain
     this.chain.push(block);
+
+    // clean up list of open transactions and open blocks
+    this.clearOpenTrx(block.transactions, block.states);
 
     return block;
   }
@@ -96,8 +119,36 @@ export class Blockchain {
         console.log(`block received from ${miner} is invalid - removing!`);
         this.chain.pop();
       } else {
-        this.transactions.splice(0, this.transactions.length);
+        this.clearOpenTrx(block.transactions, block.states);
       }
+    }
+  }
+
+  /**
+   * Removes transactions and states from the list of opens.
+   * Used to clean up after adding a block mined by another node.
+   */
+  clearOpenTrx(transactions: Transaction[], states: WalletState[]) {
+    if (transactions) {
+      transactions.forEach(trx => {
+        const index = this.transactions.findIndex(t => t.transaction.id === trx.transaction.id);
+        if (index >= 0) {
+          this.transactions.splice(index, 1);
+        }
+      });
+    }
+
+    if (states) {
+      states.forEach(stat => {
+        // states of age 1 have been newly added.
+        // Note: after preparation procedures, the list 'this.states' contains the hole state of the BlockChain
+        if (stat.age === 1) {
+          const index = this.states.findIndex(s => s.wallet.walletaddress === stat.wallet.walletaddress);
+          if (index >= 0) {
+            this.states.splice(index, 1);
+          }
+        }
+      });
     }
   }
 
@@ -105,7 +156,7 @@ export class Blockchain {
    * Create a SHA-256 hash of a block
    */
   hash(block: Block): string {
-    return this.toHexString(sha256.hash(stringToBytes(this.toHashString(block, null))));
+    return this.toHexString(sha256.hash(stringToBytes(this.toHashString(block, null, null))));
   }
 
   /**
@@ -115,8 +166,10 @@ export class Blockchain {
     const lastBlock: Block = this.chain[this.chain.length - 1];
     const lastHash: string = this.hash(lastBlock);
 
+    this.nextStates = this.transformStates(lastBlock.states);
+
     let nonce = 0;
-    while (!this.verifyProof(this.transactions, lastHash, nonce)) {
+    while (!this.verifyProof(this.transactions, this.nextStates, lastHash, nonce)) {
       if (nonce % 10 === 0) {
         console.log('mining! current nonce: ' + nonce);
       }
@@ -127,10 +180,53 @@ export class Blockchain {
   }
 
   /**
+   * Transforms current state to the next state, depending on:
+   * - Requests for new Wallets (=> new State Items)
+   * - Transactions changing existing State Items (=> increase / decrease balance of existing Wallets)
+   */
+  private transformStates(lastStates: WalletState[]): WalletState[] {
+    const nextStates = new Array<WalletState>();
+
+    // prepare everyting in a new list to be included when creating the new block
+    if (lastStates) {
+      lastStates.forEach(state => {
+        // deep copy the state object as it comes from the Block already in Chain
+        // if we would change the original reference, the Chain would become invalid!
+        const next = Object.assign({}, state);
+        next.wallet = Object.assign({}, state.wallet);
+
+        // increment age and add to temporary list
+        next.age += 1;
+        nextStates.push(next);
+      });
+    }
+
+    // increment age of new Wallets and add them to our temporary list as well. They'll become active, as age changes from 0 to 1
+    this.states.forEach(state => {
+      state.age += 1;
+      nextStates.push(state);
+    });
+
+    // increase / decrease balance of WalletState items depending on the open Transactions
+    this.transactions.forEach(trx => {
+      let index = nextStates.findIndex(state => state.wallet.walletaddress === trx.transaction.recipientAddress);
+      if (index >= 0) {
+        nextStates[index].wallet.balance += trx.transaction.amount;
+      }
+      index = nextStates.findIndex(state => state.wallet.walletaddress === trx.transaction.senderAdress);
+      if (index >= 0) {
+        nextStates[index].wallet.balance -= trx.transaction.amount;
+      }
+    });
+
+    return nextStates;
+  }
+
+  /**
    * Check, if a hash value satisfies the mining conditions
    */
-  verifyProof(transactions: Transaction[], lastHash: string, nonce: number): boolean {
-    const guess: string = this.toHashString(null, transactions) + lastHash + nonce;
+  verifyProof(transactions: Transaction[], states: WalletState[], lastHash: string, nonce: number): boolean {
+    const guess: string = this.toHashString(null, transactions, null) + this.toHashString(null, null, states) + lastHash + nonce;
     const guessHash: string = this.toHexString(sha256.hash(stringToBytes(guess)));
 
     console.log(guessHash);
@@ -155,12 +251,12 @@ export class Blockchain {
         // First, check if last block's hash corresponds to our current blocks parameter
         if (block.previousHash !== hash) {
           console.log(`verifyChain: block ${i}: hash do not match - invalid! block.previousHash: ${block.previousHash} <> ${hash}`);
+          console.log(lastBlock);
           return false;
         }
 
         // Second, check proof of work for current block
-        const transactions = block.transactions;
-        if (!this.verifyProof(transactions, block.previousHash, block.nonce)) {
+        if (!this.verifyProof(block.transactions, block.states, block.previousHash, block.nonce)) {
           console.log(`verifyChain: block ${i}: no proof of work - invalid!`);
           return false;
         }
@@ -176,7 +272,8 @@ export class Blockchain {
   /**
    * Resolve conflicts between blockchain's nodes by replacing
    * our chain with the longest valid in the network.
-   * Clears all open transactions and returns true, if our chain was replaced.
+   * Clears all open transactions and states.
+   * Returns true, if our chain was replaced.
    */
   resolveConflicts(chain: Chain): boolean {
     console.log('resolving conflicts:', chain);
@@ -186,6 +283,7 @@ export class Blockchain {
         this.chain.push(block);
       });
       this.transactions.splice(0, this.transactions.length);
+      this.states.splice(0, this.states.length);
       return true;
     } else {
       return false;
@@ -196,13 +294,32 @@ export class Blockchain {
    * Helper method that transforms a block or a list of transactions to its string representation
    * taking care of the order of objects parameters.
    */
-  private toHashString(block: Block, transactions: Transaction[]): string {
+  private toHashString(block: Block, transactions: Transaction[], states: WalletState[]): string {
     let result = '';
     const divider = '_';
 
+    if (states) {
+      const sorted = states.sort((a, b) => {
+        if (a.wallet.walletaddress > b.wallet.walletaddress) {
+          return 1;
+        }
+        if (a.wallet.walletaddress < b.wallet.walletaddress) {
+          return -1;
+        }
+        return 0;
+      });
+
+      for (let i = 0; i < sorted.length; i++) {
+        const wallet = sorted[i];
+        result += wallet.signature + divider + wallet.wallet.balance
+          + divider + wallet.wallet.publicKey + divider + wallet.wallet.walletaddress;
+      }
+    }
+
     if (block) {
       result += block.blockNumber + divider + block.nonce + divider + block.previousHash
-        + divider + block.timestamp + divider + this.toHashString(null, block.transactions);
+        + divider + block.timestamp + divider + this.toHashString(null, block.transactions, null)
+        + this.toHashString(null, null, block.states);
     }
 
     if (transactions) {
@@ -249,21 +366,23 @@ export class NodeService {
   private blockchain: Blockchain;
 
   private trxObservable: Observable<Transaction[]>;
+  private stateObservable: Observable<WalletState[]>;
   private chainObservable: Observable<Block[]>;
 
-  private trxlog: Array<string>;
-  private trxlogObservable: Observable<string[]>;
+  private trxlog: Array<any>;
+  private trxlogObservable: Observable<any[]>;
 
   constructor() {
     this.blockchain = new Blockchain();
 
     this.trxObservable = of(this.blockchain.transactions);
+    this.stateObservable = of(this.blockchain.states);
     this.chainObservable = of(this.blockchain.chain);
 
-    this.trxlog = new Array<string>();
+    this.trxlog = new Array<any>();
     this.trxlogObservable = of(this.trxlog);
 
-    this.socket = io.connect('ws://localhost:3000');
+    this.socket = SocketUtil.connect(environment);
     this.listen();
   }
 
@@ -277,13 +396,34 @@ export class NodeService {
   private listen() {
 
     /**
+     * New wallet request; add to blockchains state array
+     */
+    this.socket.on('wallet', (swallet: string) => {
+      console.log(`NodeService: receiving new wallet: ${swallet}`);
+
+      const wallet: WalletState = JSON.parse(swallet);
+      this.trxlog.push(wallet);
+
+      if (this.blockchain.submitState(wallet)) {
+        this.socket.emit('response', JSON.stringify({
+          message: 'Wallet-State will be added to Block No. ' + (this.blockchain.chain.length + 1)
+        }));
+      } else {
+        this.socket.emit('response', JSON.stringify({
+          message: 'Invalid wallet state!'
+        }));
+      }
+    });
+
+    /**
      * New transaction request; add to blockchains transaction array
      */
     this.socket.on('trx', (strx: string) => {
       console.log(`NodeService: receiving transaction: ${strx}`);
-      this.trxlog.push(strx);
 
       const trx: Transaction = JSON.parse(strx);
+      this.trxlog.push(trx);
+
       if (this.blockchain.submitTransaction(trx)) {
         this.socket.emit('response', JSON.stringify({
           message: 'Transaction will be added to Block No. ' + (this.blockchain.chain.length + 1)
@@ -311,8 +451,9 @@ export class NodeService {
      */
     this.socket.on('chain', (schain: string) => {
       console.log(`NodeService: receiving chain: ${schain}`);
-      this.trxlog.push(schain);
+
       const chain = JSON.parse(schain);
+      this.trxlog.push(chain);
 
       if (this.blockchain.resolveConflicts(chain)) {
         this.socket.emit('response', JSON.stringify({
@@ -340,9 +481,10 @@ export class NodeService {
      */
     this.socket.on('commit', (scommit: string) => {
       console.log(`NodeService: receiving commit message: ${scommit}`);
-      this.trxlog.push(scommit);
 
       const commitMsg = JSON.parse(scommit);
+      this.trxlog.push(commitMsg);
+
       this.blockchain.addBlock(commitMsg.block, commitMsg.node);
     });
 
@@ -353,6 +495,13 @@ export class NodeService {
    */
   getTransactions(): Observable<Transaction[]> {
     return this.trxObservable;
+  }
+
+  /**
+   * Return the Observable pointing to the list of states ready to be added to the next block
+   */
+  getStates(): Observable<WalletState[]> {
+    return this.stateObservable;
   }
 
   /**
@@ -375,12 +524,14 @@ export class NodeService {
   async mine(): Promise<Block> {
     let block: Block;
 
-    if (this.blockchain.transactions.length > 0) {
+    if (this.blockchain.transactions.length > 0 || this.blockchain.states.length > 0) {
       const lastBlock = this.blockchain.chain[this.blockchain.chain.length - 1];
       const nonce = this.blockchain.proofOfWork();
 
       const previousHash = this.blockchain.hash(lastBlock);
       block = this.blockchain.createBlock(nonce, previousHash);
+
+      console.log(lastBlock);
 
       this.socket.emit('commit', JSON.stringify({
         message: 'New Block forged',
@@ -405,7 +556,7 @@ export class NodeService {
   /**
    * Access the Observable with the transaction log
    */
-  getTrxLog(): Observable<string[]> {
+  getTrxLog(): Observable<any[]> {
     return this.trxlogObservable;
   }
 

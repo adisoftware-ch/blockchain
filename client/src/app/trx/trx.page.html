@@ -9,7 +9,12 @@
 <ion-content>
   <ion-list>
     <ion-item *ngFor="let trx of trxlog | async">
-      <ion-label>{{trx}}</ion-label>
+      <ion-label>
+        <p *ngIf="trx.wallet">NEW WALLET: {{trx.wallet.walletaddress}}</p>
+        <p *ngIf="trx.chain">CHAIN EXCHANGE: {{trx.node}} LEN: {{trx.chain.length}}</p>
+        <p *ngIf="trx.message">NEW BLOCK: {{trx.node}}</p>
+        <p *ngIf="trx.transaction">NEW TRANSACTION: {{trx.transaction.id}}</p>
+      </ion-label>
     </ion-item>
   </ion-list>
 </ion-content>

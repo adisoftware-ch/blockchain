@@ -3,7 +3,17 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  dataProvider: {
+    secure            : false,
+    socketurl         : 'ws://localhost:3000',
+    secureconfig      : {
+      ca: '../assets/cert.pem',
+      secure: true,
+      rejectUnauthorized: false,
+      agent: false
+    }
+  }
 };
 
 /*
