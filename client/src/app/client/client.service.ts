@@ -1,13 +1,8 @@
 import { Injectable } from '@angular/core';
 import { signBytes, stringToBytes, randomSeed, privateKey, publicKey } from '@waves/ts-lib-crypto';
 
-// npm i socket.io-client
-// npm i @types/socket.io-client
-// npm install fast-sha256
-
 import { Observable, of } from 'rxjs';
-import { SocketUtil } from '../util/socket.util';
-import { environment } from 'src/environments/environment';
+import { MessagingService, Message } from '../util/messaging.service';
 
 export class Wallet {
   publicKey: string;
@@ -38,9 +33,9 @@ export class Transaction {
 })
 export class ClientService {
 
-  private socket: SocketIOClient.Socket;
-
   private privateKey: string;
+
+  private messaging: Observable<Message>;
 
   wallet: Wallet;
   walletObservable: Observable<Wallet>;
@@ -48,38 +43,40 @@ export class ClientService {
   wallets: string[];
   walletsObservable: Observable<string[]>;
 
-  constructor() {
+  constructor(private messagingService: MessagingService) {
     this.wallets = new Array<string>();
     this.walletsObservable = of(this.wallets);
-
-    this.socket = SocketUtil.connect(environment);
-    this.listen();
   }
 
   /**
    * Initialize the client. Called on startup of the app.
    */
   start() {
+    this.messaging = this.messagingService.messaging();
     this.generateWallet();
     console.log(`ClientService initialized: ${this.wallet.walletaddress}`);
+
+    this.listen();
   }
 
   private listen() {
-    this.socket.on('commit', (scommit: string) => {
-      console.log(`receiving new committed block: ${scommit}`);
+    this.messaging.subscribe(message => {
+      if (message.event === 'commit') {
+        console.log(`receiving new committed block: ${message.message}`);
 
-      const commitMsg = JSON.parse(scommit);
+        const commitMsg = JSON.parse(message.message);
 
-      this.wallets.splice(0, this.wallets.length);
-      commitMsg.block.states.forEach((state: WalletState) => {
-        const wallet = state.wallet.walletaddress;
-        if (wallet !== this.wallet.walletaddress) {
-          this.wallets.push(wallet);
-        } else {
-          this.wallet.age = state.age;
-          this.wallet.balance = state.wallet.balance;
-        }
-      });
+        this.wallets.splice(0, this.wallets.length);
+        commitMsg.block.states.forEach((state: WalletState) => {
+          const wallet = state.wallet.walletaddress;
+          if (wallet !== this.wallet.walletaddress) {
+            this.wallets.push(wallet);
+          } else {
+            this.wallet.age = state.age;
+            this.wallet.balance = state.wallet.balance;
+          }
+        });
+      }
     });
   }
 
@@ -113,7 +110,7 @@ export class ClientService {
         age: 0
       };
 
-      this.socket.emit('wallet', JSON.stringify(walletState));
+      this.messagingService.send('wallet', JSON.stringify(walletState));
     }
   }
 
@@ -134,7 +131,7 @@ export class ClientService {
     const msg = JSON.stringify(trx);
 
     console.log(`ClientService.generateTrx(..): sending trx:  ${msg}`);
-    this.socket.emit('trx', msg);
+    this.messagingService.send('trx', msg);
 
     return new Promise((resolve) => {
       resolve(trx.transaction.id);

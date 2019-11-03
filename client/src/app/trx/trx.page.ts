@@ -11,10 +11,13 @@ export class TrxPage implements OnInit {
 
   trxlog: Observable<any[]>;
 
+  nodeID: string;
+
   constructor(private nodeService: NodeService) {}
 
   ngOnInit() {
     this.trxlog = this.nodeService.getTrxLog();
+    this.nodeID = this.nodeService.getNodeID();
   }
 
 }

@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { NodeService, Block } from './node.service';
+import { NodeService } from './node.service';
 import { Observable } from 'rxjs';
 import { Transaction, WalletState } from '../client/client.service';
 import { AlertController, LoadingController } from '@ionic/angular';
+import { Block } from './blockchain.class';
 
 @Component({
   selector: 'app-node',
@@ -19,11 +20,6 @@ export class NodePage implements OnInit {
   constructor(private nodeService: NodeService, private alertController: AlertController, private loadingController: LoadingController) {}
 
   ngOnInit() {
-    // wait 500ms for consensus between nodes
-    setTimeout(() => {
-      this.nodeService.consensus();
-    }, 500);
-
     this.fullChain = this.nodeService.getFullChain();
     this.openTransactions = this.nodeService.getTransactions();
     this.openStates = this.nodeService.getStates();

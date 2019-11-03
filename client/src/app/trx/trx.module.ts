@@ -4,6 +4,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrxPage } from './trx.page';
+import { ReversePipe } from '../util/reverse.pipe';
 
 @NgModule({
   imports: [
@@ -12,6 +13,9 @@ import { TrxPage } from './trx.page';
     FormsModule,
     RouterModule.forChild([{ path: '', component: TrxPage }])
   ],
-  declarations: [TrxPage]
+  declarations: [
+    TrxPage,
+    ReversePipe
+  ]
 })
 export class TrxPageModule {}

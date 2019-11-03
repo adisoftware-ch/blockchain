@@ -7,13 +7,30 @@
 </ion-header>
 
 <ion-content>
-  <ion-list>
-    <ion-item *ngFor="let trx of trxlog | async">
+  <ion-list *ngIf="(trxlog | async)?.length; let length">
+    <ion-item *ngFor="let trx of trxlog | async | reverse; let i = index">
       <ion-label>
-        <p *ngIf="trx.wallet">NEW WALLET: {{trx.wallet.walletaddress}}</p>
-        <p *ngIf="trx.chain">CHAIN EXCHANGE: {{trx.node}} LEN: {{trx.chain.length}}</p>
-        <p *ngIf="trx.message">NEW BLOCK: {{trx.node}}</p>
-        <p *ngIf="trx.transaction">NEW TRANSACTION: {{trx.transaction.id}}</p>
+        <p *ngIf="trx.wallet">
+          #{{length - i}} <ion-icon name="arrow-forward" class="icon"></ion-icon> NEW WALLET: {{trx.wallet.walletaddress}}
+        </p>
+        <p *ngIf="trx.requestchains">
+          #{{length - i}} <ion-icon name="arrow-back" class="icon"></ion-icon>REQUEST CHAINS
+        </p>
+        <p *ngIf="trx.chain && trx.node !== nodeID">
+          #{{length - i}} <ion-icon name="arrow-forward" class="icon"></ion-icon>RECEIVE CHAIN: {{trx.node}} LEN: {{trx.chain.length}}
+        </p>
+        <p *ngIf="trx.chain && trx.node == nodeID">
+          #{{length - i}} <ion-icon name="arrow-back" class="icon"></ion-icon>SEND CHAIN: {{trx.node}} LEN: {{trx.chain.length}}
+        </p>
+        <p *ngIf="trx.message && trx.node !== nodeID">
+          #{{length - i}} <ion-icon name="arrow-forward" class="icon"></ion-icon>NEW BLOCK: {{trx.node}}
+        </p>
+        <p *ngIf="trx.message && trx.node == nodeID">
+          #{{length - i}} <ion-icon name="arrow-back" class="icon"></ion-icon>COMMIT BLOCK: {{trx.node}}
+        </p>
+        <p *ngIf="trx.transaction">
+          #{{length - i}} <ion-icon name="arrow-forward" class="icon"></ion-icon>NEW TRANSACTION: {{trx.transaction.id}}
+        </p>
       </ion-label>
     </ion-item>
   </ion-list>

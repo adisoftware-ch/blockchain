@@ -31,7 +31,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     // initialize client and node; start listening
-    this.clientService.start();
     this.nodeService.start();
+    this.clientService.start();
   }
 }

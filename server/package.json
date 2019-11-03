@@ -6,7 +6,8 @@
   "scripts": {
     "tsc": "tsc",
     "dev": "ts-node-dev --respawn --transpileOnly ./src/main.ts",
-    "prod": "tsc && NODE_ENV=production node ./build/main.js"
+    "prod": "tsc && NODE_ENV=production node ./build/main.js",
+    "start": "tsc && NODE_ENV=production node ./build/main.js"
   },
   "author": "adisoftware.ch",
   "license": "ISC",
