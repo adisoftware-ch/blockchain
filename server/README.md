@@ -1,3 +1,0 @@
-# blockchain-server
-
-tbd
