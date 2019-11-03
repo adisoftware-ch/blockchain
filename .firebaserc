@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "demo": "adisoftware-blockchain",
+    "default": "adisoftware-blockchain"
+  }
+}

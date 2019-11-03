@@ -40,7 +40,7 @@ export class NodeService {
     console.log(`NodeService initialized: ${this.blockchain.nodeID}`);
 
     this.listen();
-    this.consensus();
+    // this.consensus();
   }
 
   private listen() {
@@ -211,7 +211,7 @@ export class NodeService {
 
   consensus() {
     this.trxlog.push({requestchains: true});
-    this.messagingService.send('request-chains', this.blockchain.nodeID);
+    this.messagingService.send('request-chain', this.blockchain.nodeID);
   }
 
   /**

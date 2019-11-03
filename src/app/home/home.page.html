@@ -14,19 +14,28 @@
         <ion-card-title>Simple Blockchain</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <p>A Blockchain is - simply spoken - a database laking any central instance. All data is hold by distributed nodes. Trust over the data contained is given by sealing past Transactions and finding consensus between the Nodes. A malicious Node would require 51% of calculation power to break consensus.</p>
+        <p>
+          Blockchain is - simply spoken - a database where all data is held by the users (Nodes).<br/>
+          - Trust concerning integrity of the data is given by irreversably sealing blocks of transactions (Mining).<br/>
+          - Completeness over the data is given by regularly negotiating about current complete and correct version (Consensus)
+        </p>
         <br/>
-        <p>This Demo is intended to showcase the basic steps of a Blockchain. How does it work:</p>
-        <ol>
-          <li>Client sends Transaction to the System</li>
-          <li>All Nodes pick it up</li>
-          <li>Other Transactions to follow, till ..</li>
-          <li>At least one Node mines the next block of Transactions</li>
-          <li>The mining Node notifies the others of the newly mined Block</li>
-          <li>All Nodes pick the new Block; check it for validity (Proof of Work) and update their Blockchain</li>
-          <li>Once accepted, the new Block is sealed; e.g. immutable without forking the Blockchain</li>
-        </ol>
-        <p>Play around! Start the app in multiple browsers and multiple devices. Create Transactions as a Client and mine Blocks as a mining Node. Check the Log for messages sent and consumed by the distributed System.</p>
+        <p>
+          This Demo is intended to showcase these basic steps of a Blockchain:<br/>
+          - Start the App at least twice<br/>
+          - Have a look at the 'Node's<br/>
+          - Mine the first blocks; this activates the client's wallets<br/>
+          - Do some transactions between the clients<br/>
+          - Mine as you want; the blockchain grows<br/><br/>
+          - Start a third (or fourth ...) App<br/>
+          - Look at it's Node - it's empty!<br/>
+          - Run 'Consensus' - it receives the chain!<br/>
+          - Go on playing arount ...
+        </p>
+        <br/>
+        <p>
+          <b>Note: </b>The chain lives only in memory. It lives exactly as long as - worldwide - at least one Node (App) is alive!
+        </p>
       </ion-card-content>
     </ion-card>
     <ion-list lines="none">
