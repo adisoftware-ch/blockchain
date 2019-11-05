@@ -1,0 +1,33 @@
+[debug] [2019-11-05T18:52:53.416Z] ----------------------------------------------------------------------
+[debug] [2019-11-05T18:52:53.418Z] Command:       /Users/adrian/.codemix-store/nodejs/10.15.0/bin/node /usr/local/bin/firebase deploy
+[debug] [2019-11-05T18:52:53.418Z] CLI Version:   7.2.1
+[debug] [2019-11-05T18:52:53.418Z] Platform:      darwin
+[debug] [2019-11-05T18:52:53.419Z] Node Version:  v10.15.0
+[debug] [2019-11-05T18:52:53.426Z] Time:          Tue Nov 05 2019 19:52:53 GMT+0100 (GMT+01:00)
+[debug] [2019-11-05T18:52:53.426Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2019-11-05T18:52:53.441Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2019-11-05T18:52:53.442Z] > authorizing via signed-in user
+[debug] [2019-11-05T18:52:53.442Z] [iam] checking project adisoftware-blockchain for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2019-11-05T18:52:53.443Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2019-11-05T18:52:53.444Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ <request body omitted>
+[debug] [2019-11-05T18:52:53.842Z] <<< HTTP RESPONSE 200
+[debug] [2019-11-05T18:52:53.851Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/adisoftware-blockchain:testIamPermissions  
+
+[debug] [2019-11-05T18:52:55.156Z] <<< HTTP RESPONSE 200
+[debug] [2019-11-05T18:52:55.158Z] >>> HTTP REQUEST GET https://firebase.googleapis.com/v1beta1/projects/adisoftware-blockchain  
+ 
+[debug] [2019-11-05T18:52:56.692Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Deploying to 'adisoftware-blockchain'...
+[info] 
+[info] i  deploying firestore, hosting
+[info] i  firestore: checking firestore.rules for compilation errors...
+[info] i  firestore: reading indexes from firestore.indexes.json...
+[debug] [2019-11-05T18:52:56.699Z] >>> HTTP REQUEST POST https://firebaserules.googleapis.com/v1/projects/adisoftware-blockchain:test  
+
+[debug] [2019-11-05T18:52:58.225Z] <<< HTTP RESPONSE 200
+[info] ✔  firestore: rules file firestore.rules compiled successfully
+[debug] [2019-11-05T18:52:58.227Z] >>> HTTP REQUEST POST https://firebasehosting.googleapis.com/v1beta1/sites/adisoftware-blockchain/versions  
+
